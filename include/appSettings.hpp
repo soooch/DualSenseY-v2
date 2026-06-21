@@ -43,24 +43,18 @@ static std::unordered_map<std::string, uint8_t> g_FontIndex = {
 
 struct AppSettings {
 	bool DisableAllBluetoothControllersOnExit = false;
-	bool DontConnectToServerOnStart = false;
 	std::string SelectedLanguage = "en";
 	bool HideToTrayOnMinimize = false;
 	bool HideToTrayOnStart = false;
-	std::string ServerAddress = "maluch.mikr.us";
-	uint16_t ServerPort = 30151;
 	uint16_t LocalPort = 6969;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
 	AppSettings,
 	DisableAllBluetoothControllersOnExit,
-	DontConnectToServerOnStart,
 	SelectedLanguage,
 	HideToTrayOnMinimize,
 	HideToTrayOnStart,
-	ServerAddress,
-	ServerPort,
 	LocalPort
 );
 

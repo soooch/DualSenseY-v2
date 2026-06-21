@@ -8,7 +8,6 @@
 #include "controllerEmulation.hpp"
 #include "utils.hpp"
 #include "appSettings.hpp"
-#include "client.hpp"
 
 static inline std::tm StringToTimeZone(const std::string& dateStr, int utcOffsetHours) {
 	std::tm tm = {};
@@ -37,7 +36,6 @@ class MainWindow {
 	Vigem& m_Vigem;
 	UDP& m_Udp;
 	AppSettings& m_AppSettings;
-	Client& m_Client;
 	bool m_IsAdminWindows = IsRunningAsAdministratorWindows();
 	bool& m_IsLightMode;
 private:
@@ -59,15 +57,13 @@ private:
 	bool TreeElement_motion(s_scePadSettings& scePadSettings, s_ScePadData& state);
 	bool TreeElement_touchpad(s_scePadSettings& scePadSettings);
 	bool TreeElement_sharebtn(s_scePadSettings& scePadSettings);
-	bool Online(s_scePadSettings& scePadSettings);
-	bool MessageFromServer(bool* open, SCMD::CMD_CODE_RESPONSE* Response);
 	bool ScreenBlock(bool open, const char* message, const char* popup_id);
 	bool ScreenBlockClosable(bool* open, const char* message, const char* popup_id);
 	void Errors();
 	bool GetHotkeyFromControllerScreen(bool* open, int countdown, int expectedCountdownLength);
 public:
-	MainWindow(Strings& strings, AudioPassthrough& audio, Vigem& vigem, UDP& udp, AppSettings& appSettings, Client& client, bool& IsLightMode)
-		: m_Strings(strings), m_Audio(audio), m_Vigem(vigem), m_Udp(udp), m_AppSettings(appSettings), m_Client(client), m_IsLightMode(IsLightMode) {
+	MainWindow(Strings& strings, AudioPassthrough& audio, Vigem& vigem, UDP& udp, AppSettings& appSettings, bool& IsLightMode)
+		: m_Strings(strings), m_Audio(audio), m_Vigem(vigem), m_Udp(udp), m_AppSettings(appSettings), m_IsLightMode(IsLightMode) {
 	}
 	void Show(s_scePadSettings scePadSettings[4], float scale);
 	int GetSelectedController();

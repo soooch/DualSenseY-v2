@@ -29,7 +29,6 @@
 #include "controllerEmulation.hpp"
 #include "scePadHandle.hpp"
 #include "keyboardMouseMapper.hpp"
-#include "client.hpp"
 #include "appMutex.hpp"
 
 bool isLightMode = false;
@@ -130,11 +129,6 @@ bool Application::Run(const std::string& Argument1) {
 	Vigem vigem(m_ScePadSettings, udp);
 	Strings strings = {};
 	KeyboardMouseMapper keyboardMouseMapper(m_ScePadSettings);
-	Client client(m_ScePadSettings);
-	client.Start();
-	if (!m_AppSettings.DontConnectToServerOnStart) client.Connect(m_AppSettings.ServerAddress, m_AppSettings.ServerPort);
-	client.AllowedToHostController = vigem.IsVigemConnected();
-	vigem.SetPeerControllerDataPointer(client.GetActivePeerControllerMap());
 	strings.ReadStringsFromJson(CountryCodeToFile(m_AppSettings.SelectedLanguage));
 
 	if (Argument1 != "") {
@@ -150,7 +144,7 @@ bool Application::Run(const std::string& Argument1) {
 	io.FontDefault = io.Fonts->Fonts[g_FontIndex[m_AppSettings.SelectedLanguage]];
 
 	// Windows
-	MainWindow main(strings, audio, vigem, udp, m_AppSettings, client, isLightMode);
+	MainWindow main(strings, audio, vigem, udp, m_AppSettings, isLightMode);
 #pragma endregion
 
 #ifdef WINDOWS
@@ -199,7 +193,6 @@ bool Application::Run(const std::string& Argument1) {
 
 		int selectedController = main.GetSelectedController();
 		vigem.SetSelectedController(selectedController);
-		client.SetSelectedController(selectedController);
 		udp.SetVibrationToUdpConfig(m_ScePadSettings[selectedController].rumbleFromEmulatedController);
 		audio.Validate();
 

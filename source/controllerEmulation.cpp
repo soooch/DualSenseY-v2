@@ -209,11 +209,6 @@ void Vigem::SetSelectedController(uint32_t selectedController) {
 	m_SelectedController = selectedController;
 }
 
-void Vigem::SetPeerControllerDataPointer(std::shared_ptr<std::unordered_map<uint32_t, PeerControllerData>> Pointer) {
-#ifdef WINDOWS
-	m_PeerControllers = Pointer;
-#endif
-}
 
 bool Vigem::IsVigemConnected() {
 #if !defined(__linux__) && !defined(__MACOS__)
@@ -343,66 +338,6 @@ void Vigem::EmulatedControllerUpdate() {
 			}
 		}
 
-		if (auto peerControllers = m_PeerControllers.lock()) {
-			for (auto it = peerControllers->begin(); it != peerControllers->end(); ) {
-				auto& peer = it->second;
-				auto targetIter = m_PeerControllerTargets.find(it->first);
-
-				if (peer.AllowedToReceive && targetIter == m_PeerControllerTargets.end()) {
-					PVIGEM_TARGET target = peer.Controller == CONTROLLER::XBOX360 ? vigem_target_x360_alloc() : vigem_target_ds4_alloc();
-					VIGEM_ERROR error = vigem_target_add(m_VigemClient, target);
-					if (peer.Controller == CONTROLLER::XBOX360) vigem_target_x360_register_notification(m_VigemClient, target, x360PeerNotification, &peer);
-					if (peer.Controller == CONTROLLER::DUALSHOCK4) vigem_target_ds4_register_notification(m_VigemClient, target, ds4PeerNotification, &peer);
-					if (error == VIGEM_ERROR_NONE) {
-						m_PeerControllerTargets[it->first] = target;
-						it->second.Disconnected = false;
-						LOGI("[PEER CONTROLLER] Controller created");
-					}
-					else {
-						LOGE("[PEER CONTROLLER] Failed to allocate peer controller");
-					}
-				}
-
-				if (targetIter != m_PeerControllerTargets.end() && peer.Disconnected) {
-					if (!targetIter->second) continue;
-					VIGEM_ERROR error = vigem_target_remove(m_VigemClient, targetIter->second);
-					if (error == VIGEM_ERROR_NONE) {
-						if (peer.Controller == CONTROLLER::XBOX360) vigem_target_x360_unregister_notification(targetIter->second);
-						else if (peer.Controller == CONTROLLER::DUALSHOCK4) vigem_target_ds4_unregister_notification(targetIter->second);
-						vigem_target_free(targetIter->second);
-						m_PeerControllerTargets.erase(targetIter);
-						it->second.AllowedToReceive = false;
-						it->second.AllowedToSend = false;
-						it->second.Disconnected = false;
-						it = peerControllers->erase(it);
-						LOGI("[PEER CONTROLLER] Controller destroyed");
-					}
-					else {
-						LOGE("[PEER CONTROLLER] Controller failed to be removed, ERROR: %d", (int)error);
-					}
-					continue;
-				}
-
-				s_ScePadData inputState = {  };
-				inputState.LeftStick.X = 128; inputState.LeftStick.Y = 128;
-				inputState.RightStick.X = 128; inputState.RightStick.Y = 128;
-				{
-					std::lock_guard<std::mutex> inputGuard(peer.Lock);
-					inputState = peer.InputState;
-				}
-				applyInputSettingsToScePadState(peer.Settings, inputState);
-
-				targetIter = m_PeerControllerTargets.find(it->first);
-				if (targetIter != m_PeerControllerTargets.end() && targetIter->second) {
-					if (peer.Controller == CONTROLLER::XBOX360)
-						Update360ByTarget(targetIter->second, inputState);
-					else if (peer.Controller == CONTROLLER::DUALSHOCK4)
-						UpdateDs4ByTarget(targetIter->second, inputState);
-				}
-
-				++it;
-			}
-		}
 
 		SetWaitableTimer(hTimer, &liDueTime, 0, NULL, NULL, 0);
 		WaitForSingleObject(hTimer, INFINITE);
@@ -428,19 +363,6 @@ VOID Vigem::ds4Notification(PVIGEM_CLIENT Client, PVIGEM_TARGET Target, UCHAR La
 
 	data->instance->m_ScePadSettings[data->index].lightbarFromEmulatedController = { LightbarColor.Red, LightbarColor.Green, LightbarColor.Blue };
 	data->instance->m_ScePadSettings[data->index].rumbleFromEmulatedController = { LargeMotor, SmallMotor };
-}
-VOID Vigem::x360PeerNotification(PVIGEM_CLIENT Client, PVIGEM_TARGET Target, UCHAR LargeMotor, UCHAR SmallMotor, UCHAR LedNumber, LPVOID UserData) {
-	auto* data = static_cast<PeerControllerData*>(UserData);
-	if (!data) return;
-
-	data->Vibration = { LargeMotor, SmallMotor };
-}
-VOID Vigem::ds4PeerNotification(PVIGEM_CLIENT Client, PVIGEM_TARGET Target, UCHAR LargeMotor, UCHAR SmallMotor, DS4_LIGHTBAR_COLOR LightbarColor, LPVOID UserData) {
-	auto* data = static_cast<PeerControllerData*>(UserData);
-	if (!data) return;
-
-	data->Vibration = { LargeMotor, SmallMotor };
-	data->Lightbar = { LightbarColor.Red, LightbarColor.Green, LightbarColor.Blue };
 }
 #endif
 

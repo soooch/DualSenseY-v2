@@ -19,7 +19,6 @@
 #include <atomic>
 #include <thread>
 #include "udp.hpp"
-#include <client.hpp>
 #include <unordered_map>
 
 // User (4) + Peers (4)
@@ -42,8 +41,6 @@ private:
    static VOID CALLBACK xbox360Notification(PVIGEM_CLIENT Client, PVIGEM_TARGET Target, UCHAR LargeMotor, UCHAR SmallMotor, UCHAR LedNumber, LPVOID UserData);
    static VOID CALLBACK ds4Notification(PVIGEM_CLIENT Client, PVIGEM_TARGET Target, UCHAR LargeMotor, UCHAR SmallMotor, DS4_LIGHTBAR_COLOR LightbarColor, LPVOID UserData);
 
-   static VOID CALLBACK x360PeerNotification(PVIGEM_CLIENT Client, PVIGEM_TARGET Target, UCHAR LargeMotor, UCHAR SmallMotor, UCHAR LedNumber, LPVOID UserData);
-   static VOID CALLBACK ds4PeerNotification(PVIGEM_CLIENT Client, PVIGEM_TARGET Target, UCHAR LargeMotor, UCHAR SmallMotor, DS4_LIGHTBAR_COLOR LightbarColor, LPVOID UserData);
 
    std::thread m_VigemThread;
    std::atomic<bool> m_VigemThreadRunning = true;
@@ -51,8 +48,6 @@ private:
    void Update360ByTarget(PVIGEM_TARGET Target, s_ScePadData& state);
    void UpdateDs4ByTarget(PVIGEM_TARGET Target, s_ScePadData& state);
    void EmulatedControllerUpdate();
-   std::weak_ptr <std::unordered_map<uint32_t, PeerControllerData>> m_PeerControllers;
-   std::unordered_map<uint32_t, PVIGEM_TARGET> m_PeerControllerTargets;
 #endif
 
    void applyInputSettingsToScePadState(s_scePadSettings& settings, s_ScePadData& state);
@@ -65,7 +60,6 @@ public:
    void PlugControllerByIndex(uint32_t index, uint32_t controllerType);  
    bool IsVigemConnected(); 
    void SetSelectedController(uint32_t selectedController);
-   void SetPeerControllerDataPointer(std::shared_ptr<std::unordered_map<uint32_t, PeerControllerData>> Pointer);
 };
 
 #endif // CONTROLLEREMULATION_H
